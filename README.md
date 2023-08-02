@@ -1,4 +1,4 @@
-# FinTi  
+# finti  
 
 A Decentralised platform existing in a distributed network aiding finance and trade.  
 
