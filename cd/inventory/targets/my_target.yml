@@ -1,6 +1,6 @@
 classes:
   - common
-  - my_component
+  - ethereum
 
 parameters:
   target_name: my_target
