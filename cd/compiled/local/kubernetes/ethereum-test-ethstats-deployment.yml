@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ethereum
+    chart: ethereum-1.0.2
+    component: ethstats
+    heritage: Helm
+    release: ethereum-test
+  name: ethereum-test-ethstats
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ethereum
+      component: ethstats
+      release: ethereum-test
+  template:
+    metadata:
+      labels:
+        app: ethereum
+        component: ethstats
+        release: ethereum-test
+    spec:
+      containers:
+        - env:
+            - name: WS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: WS_SECRET
+                  name: ethereum-test-ethstats
+          image: ethereumex/eth-stats-dashboard:v0.0.1
+          imagePullPolicy: IfNotPresent
+          name: ethstats
+          ports:
+            - containerPort: 3000
+              name: http

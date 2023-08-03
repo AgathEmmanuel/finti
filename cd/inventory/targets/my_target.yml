@@ -1,6 +1,0 @@
-classes:
-  - common
-  - ethereum
-
-parameters:
-  target_name: my_target

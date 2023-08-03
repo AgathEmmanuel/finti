@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  genesis.json: "{\n    \"config\": {\n        \"chainId\": 98052,\n        \"homesteadBlock\"\
+    : 0,\n        \"eip150Block\": 0,\n        \"eip155Block\": 0,\n        \"eip158Block\"\
+    : 0\n    },\n    \"difficulty\":  \"0x0400\",\n    \"gasLimit\": \"0x8000000\"\
+    ,\n    \"alloc\": {\n    }\n}"
+  networkid: '98052'
+kind: ConfigMap
+metadata:
+  labels:
+    app: ethereum
+    chart: ethereum-1.0.2
+    heritage: Helm
+    release: ethereum-test
+  name: ethereum-test-geth-config

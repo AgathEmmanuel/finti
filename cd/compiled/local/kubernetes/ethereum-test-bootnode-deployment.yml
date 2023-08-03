@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ethereum
+    chart: ethereum-1.0.2
+    component: bootnode
+    heritage: Helm
+    release: ethereum-test
+  name: ethereum-test-bootnode
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ethereum
+      component: bootnode
+      release: ethereum-test
+  template:
+    metadata:
+      labels:
+        app: ethereum
+        component: bootnode
+        release: ethereum-test
+    spec:
+      containers:
+        - args:
+            - -c
+            - bootnode --nodekey=/etc/bootnode/node.key --verbosity=4
+          command:
+            - /bin/sh
+          image: ethereum/client-go:alltools-v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: bootnode
+          ports:
+            - containerPort: 30301
+              name: discovery
+              protocol: UDP
+          volumeMounts:
+            - mountPath: /etc/bootnode
+              name: data
+        - args:
+            - -c
+            - "while [ 1 ]; do echo -e \"HTTP/1.1 200 OK\n\nenode://$(bootnode -writeaddress\
+              \ --nodekey=/etc/bootnode/node.key)@$(POD_IP):30301\" | nc -l -v -p\
+              \ 80 || break; done;"
+          command:
+            - /bin/sh
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          image: ethereum/client-go:alltools-v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: bootnode-server
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /etc/bootnode
+              name: data
+      initContainers:
+        - args:
+            - -c
+            - bootnode --genkey=/etc/bootnode/node.key
+          command:
+            - /bin/sh
+          image: ethereum/client-go:alltools-v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: genkey
+          volumeMounts:
+            - mountPath: /etc/bootnode
+              name: data
+      volumes:
+        - emptyDir: {}
+          name: data

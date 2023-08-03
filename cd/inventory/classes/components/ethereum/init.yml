@@ -1,0 +1,14 @@
+---
+parameters:
+  kapitan:
+    dependencies:
+    - type: helm  
+      output_path: charts/ethereum  
+      source: stable/ethereum  
+      chart_name: ethereum  
+    compile:
+    - output_path: kubernetes  
+      input_type: kadet  
+      output_type: yml  
+      input_paths:
+        - components/ethereum

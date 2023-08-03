@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ethereum
+    chart: ethereum-1.0.2
+    component: ethstats
+    heritage: Helm
+    release: ethereum-test
+  name: ethereum-test-ethstats
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+  selector:
+    app: ethereum
+    component: ethstats
+    release: ethereum-test
+  type: LoadBalancer

@@ -1,0 +1,10 @@
+---
+classes:
+  - components.ethereum
+
+
+parameters:
+  kapitan:
+    vars:
+      target: local
+    

@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ethereum
+    chart: ethereum-1.0.2
+    component: geth-miner
+    heritage: Helm
+    release: ethereum-test
+  name: ethereum-test-geth-miner
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ethereum
+      component: geth-miner
+      release: ethereum-test
+  template:
+    metadata:
+      labels:
+        app: ethereum
+        component: geth-miner
+        release: ethereum-test
+    spec:
+      containers:
+        - args:
+            - -c
+            - geth --bootnodes=`cat /root/.ethereum/bootnodes` --mine --etherbase=0
+              --networkid=${NETWORK_ID} --ethstats=${HOSTNAME}:${ETHSTATS_SECRET}@${ETHSTATS_SVC}
+              --verbosity=5
+          command:
+            - /bin/sh
+          env:
+            - name: ETHSTATS_SVC
+              value: ethereum-test-ethstats.local-test
+            - name: ETHSTATS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: WS_SECRET
+                  name: ethereum-test-ethstats
+            - name: NETWORK_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: networkid
+                  name: ethereum-test-geth-config
+          image: ethereum/client-go:v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: geth-miner
+          ports:
+            - containerPort: 30303
+              name: discovery-udp
+              protocol: UDP
+            - containerPort: 30303
+              name: discovery-tcp
+          volumeMounts:
+            - mountPath: /root/.ethereum
+              name: data
+      initContainers:
+        - args:
+            - init
+            - /var/geth/genesis.json
+          image: ethereum/client-go:v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: init-genesis
+          volumeMounts:
+            - mountPath: /root/.ethereum
+              name: data
+            - mountPath: /var/geth
+              name: config
+        - args:
+            - -c
+            - geth account import --password /root/.ethereum/account/accountSecret
+              /root/.ethereum/account/accountPrivateKey
+          command:
+            - /bin/sh
+          image: ethereum/client-go:v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: import-geth-account
+          volumeMounts:
+            - mountPath: /root/.ethereum
+              name: data
+            - mountPath: /root/.ethereum/account
+              name: account
+              readOnly: true
+        - args:
+            - -c
+            - "apk add --no-cache curl; \nCNT=0;\necho \"retreiving bootnodes from\
+              \ $BOOTNODE_SVC\"\nwhile [ $CNT -le 90 ] \ndo\n  curl -m 5 -s $BOOTNODE_SVC\
+              \ | xargs echo -n >> /geth/bootnodes;\n  if [ -s /geth/bootnodes ] \n\
+              \  then\n    cat /geth/bootnodes;\n    exit 0;\n  fi;\n\n  echo \"no\
+              \ bootnodes found. retrying $CNT...\"; \n  sleep 2 || break;\n  CNT=$((CNT+1));\n\
+              done;\necho \"WARNING. unable to find bootnodes. continuing but geth\
+              \ may not be able to find any peers.\";\nexit 0;"
+          command:
+            - /bin/sh
+          env:
+            - name: BOOTNODE_SVC
+              value: ethereum-test-bootnode.local-test
+          image: ethereum/client-go:v1.7.3
+          imagePullPolicy: IfNotPresent
+          name: get-bootnodes
+          volumeMounts:
+            - mountPath: /geth
+              name: data
+      volumes:
+        - emptyDir: {}
+          name: data
+        - configMap:
+            name: ethereum-test-geth-config
+          name: config
+        - name: account
+          secret:
+            secretName: ethereum-test-geth-account
